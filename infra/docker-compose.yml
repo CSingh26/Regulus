@@ -1,0 +1,24 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: regulus
+      POSTGRES_PASSWORD: regulus
+      POSTGRES_DB: regulus
+    ports:
+      - '5432:5432'
+    volumes:
+      - regulus_pg_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '6379:6379'
+    volumes:
+      - regulus_redis_data:/data
+
+volumes:
+  regulus_pg_data:
+  regulus_redis_data:
