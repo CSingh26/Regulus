@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-canvas: #f7f5f0;
+  --color-panel: #ffffff;
+  --color-text: #1f2a37;
+  --color-muted: #5f6b7a;
+  --color-accent: #0ea5a4;
+  --color-accent-2: #f59e0b;
+  --color-border: #e4dfd5;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: radial-gradient(circle at top, #ffffff 0%, #f2efe8 40%, #efe9de 100%);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
