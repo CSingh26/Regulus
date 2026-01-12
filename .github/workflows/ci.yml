@@ -44,20 +44,58 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'pnpm'
-      - name: Enable corepack
-        run: corepack enable
-      - name: Install web dependencies
-        run: pnpm install
+      - name: Enable pnpm via corepack
+        run: |
+          corepack enable
+          corepack prepare pnpm@9.15.4 --activate
+          pnpm --version
+      - name: Debug Node and pnpm
+        run: |
+          node -v
+          pnpm -v
+          if [ -f pnpm-lock.yaml ]; then
+            echo "pnpm-lock.yaml: present"
+          else
+            echo "pnpm-lock.yaml: missing"
+          fi
+      - name: Resolve pnpm store path
+        id: pnpm-store
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+      - name: Install dependencies
+        run: pnpm -w install --frozen-lockfile
+      - name: Detect web workspace
+        id: web-dir
+        run: |
+          if [ -f apps/web/package.json ]; then
+            echo "dir=apps/web" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          web_pkg=$(find apps -maxdepth 2 -name package.json -print -quit)
+          if [ -n "$web_pkg" ]; then
+            echo "dir=$(dirname "$web_pkg")" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "dir=." >> "$GITHUB_OUTPUT"
       - name: Lint web
         run: |
           set -euo pipefail
           mkdir -p artifacts
-          pnpm -C apps/web lint | tee artifacts/web-lint.txt
+          pnpm -C "${{ steps.web-dir.outputs.dir }}" lint | tee artifacts/web-lint.txt
       - name: Test web
         run: |
           set -euo pipefail
-          pnpm -C apps/web test | tee artifacts/web-test.txt
+          pnpm -C "${{ steps.web-dir.outputs.dir }}" test | tee artifacts/web-test.txt
+      - name: Build web
+        run: |
+          set -euo pipefail
+          pnpm -C "${{ steps.web-dir.outputs.dir }}" build | tee artifacts/web-build.txt
       - name: Upload web artifacts
         uses: actions/upload-artifact@v4
         with:
