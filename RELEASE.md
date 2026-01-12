@@ -25,14 +25,11 @@ Regulus uses **GitHub Releases** as the canonical changelog.
 ## Release steps
 
 1. Ensure `main` is green in CI.
-2. Update versions:
-   - `apps/web/package.json`
-   - `services/api/pyproject.toml`
-3. Update release notes (GitHub Release draft).
-4. Tag the release: `git tag vX.Y.Z`.
-5. Push tags: `git push --tags`.
-6. Publish GitHub Release notes.
-7. Post‑release checks:
+2. Update `release-notes/TEMPLATE.md` with the highlights you want to ship.
+3. Run the release script:
+   - `./scripts/release.sh 1.0.0`
+   - Optionally pass a custom title as the second argument.
+4. Post‑release checks:
    - `make up`
    - `make dev`
    - smoke test `/health` and `/v1/graph/{id}`
