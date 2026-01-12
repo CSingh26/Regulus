@@ -20,7 +20,8 @@ dependencies = [
   "tree-sitter-languages>=1.10.2",
   "pgvector>=0.3.2",
   "openai>=1.51.0",
-  "sentence-transformers>=3.0.1"
+  "sentence-transformers>=3.0.1",
+  "requests>=2.32.3"
 ]
 
 [tool.hatch.build.targets.wheel]
