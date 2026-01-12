@@ -27,8 +27,8 @@ def index_repo(repo_id: int) -> dict[str, int]:
             session.add(repo)
             session.commit()
 
-            session.exec(delete(Chunk).where(Chunk.repo_id == repo_id))  # type: ignore[call-overload,arg-type]
-            session.exec(delete(File).where(File.repo_id == repo_id))  # type: ignore[call-overload,arg-type]
+            session.exec(delete(Chunk).where(Chunk.repo_id == repo_id))  # type: ignore[arg-type]
+            session.exec(delete(File).where(File.repo_id == repo_id))  # type: ignore[arg-type]
             session.commit()
 
             file_records = index_repository(Path(repo.path))
@@ -96,7 +96,7 @@ def build_embeddings(repo_id: int) -> dict[str, int]:
             session.add(repo)
             session.commit()
 
-            session.exec(delete(Embedding).where(Embedding.repo_id == repo_id))  # type: ignore[call-overload,arg-type]
+            session.exec(delete(Embedding).where(Embedding.repo_id == repo_id))  # type: ignore[arg-type]
             session.commit()
 
             chunks = list(session.exec(select(Chunk).where(Chunk.repo_id == repo_id)).all())

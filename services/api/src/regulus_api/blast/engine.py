@@ -23,6 +23,16 @@ def predict_blast_radius(repo_id: int, changed_files: list[str]) -> dict:
         edges = list(session.exec(select(GraphEdge).where(GraphEdge.repo_id == repo_id)).all())
 
     repo_root = Path(repo.path).resolve()
+    return compute_blast_radius(repo_root, changed_files, files, nodes, edges)
+
+
+def compute_blast_radius(
+    repo_root: Path,
+    changed_files: list[str],
+    files: list[File],
+    nodes: list[GraphNode],
+    edges: list[GraphEdge],
+) -> dict:
     file_by_rel: dict[str, File] = {}
     rel_by_file_id: dict[int, str] = {}
     for file in files:

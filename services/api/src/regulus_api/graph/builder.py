@@ -24,8 +24,8 @@ def build_dependency_graph(repo_id: int) -> dict[str, int]:
             session.add(repo)
             session.commit()
 
-            session.exec(delete(GraphEdge).where(GraphEdge.repo_id == repo_id))  # type: ignore[call-overload,arg-type]
-            session.exec(delete(GraphNode).where(GraphNode.repo_id == repo_id))  # type: ignore[call-overload,arg-type]
+            session.exec(delete(GraphEdge).where(GraphEdge.repo_id == repo_id))  # type: ignore[arg-type]
+            session.exec(delete(GraphNode).where(GraphNode.repo_id == repo_id))  # type: ignore[arg-type]
             session.commit()
 
             files = list(session.exec(select(File).where(File.repo_id == repo_id)).all())

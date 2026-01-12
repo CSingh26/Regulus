@@ -1,9 +1,13 @@
 from __future__ import annotations
 
 import ast
+from functools import lru_cache
+from typing import Any, cast
 
-from tree_sitter import Node, Tree
-from tree_sitter_languages import get_parser
+from tree_sitter import Language, Node, Parser, Tree
+from tree_sitter_javascript import language as javascript_language
+from tree_sitter_python import language as python_language
+from tree_sitter_typescript import language_tsx, language_typescript
 
 SUPPORTED_LANGUAGES = {"python", "javascript", "typescript", "tsx"}
 
@@ -90,3 +94,19 @@ def normalize_string(value: str) -> str:
     if len(value) >= 2 and value[0] in {'"', "'", "`"}:
         return value[1:-1]
     return value
+
+
+@lru_cache
+def get_parser(language: str) -> Parser:
+    parser = Parser()
+    if language == "python":
+        parser.language = Language(cast(Any, python_language()))
+    elif language == "javascript":
+        parser.language = Language(cast(Any, javascript_language()))
+    elif language == "typescript":
+        parser.language = Language(cast(Any, language_typescript()))
+    elif language == "tsx":
+        parser.language = Language(cast(Any, language_tsx()))
+    else:
+        raise ValueError(f"Unsupported language: {language}")
+    return parser

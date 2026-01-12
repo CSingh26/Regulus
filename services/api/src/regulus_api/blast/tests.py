@@ -15,11 +15,13 @@ def suggest_tests(changed_files: list[str], all_files: set[str]) -> list[str]:
         if not base:
             continue
 
-        python_candidates = [
+        candidate_paths = [
             Path("tests") / f"test_{base}.py",
             Path("tests") / f"{base}_test.py",
+            Path("tests") / f"test_{base}.ts",
+            Path("tests") / f"test_{base}.tsx",
         ]
-        for candidate in python_candidates:
+        for candidate in candidate_paths:
             if candidate.as_posix() in all_files:
                 suggestions.add(candidate.as_posix())
 

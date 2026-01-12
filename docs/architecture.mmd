@@ -1,0 +1,51 @@
+%% Regulus architecture
+flowchart LR
+  subgraph Web[Next.js Dashboard]
+    UI[React + Tailwind + React Flow]
+  end
+
+  subgraph API[FastAPI Service]
+    Router[REST API /v1]
+    RAG[RAG + Embeddings]
+    Graph[Graph Builder]
+    Diff[Diff Summary]
+    Metrics[Ownership + Hotspots]
+    Blast[Blast Radius]
+    Security[Security Scans]
+  end
+
+  subgraph Worker[RQ Worker]
+    Jobs[Background Jobs]
+  end
+
+  subgraph Storage[Postgres + pgvector]
+    DB[(Postgres)]
+    Vec[(pgvector)]
+  end
+
+  Redis[(Redis)]
+  Repo[(Target Repo)]
+
+  UI --> Router
+  Router --> RAG
+  Router --> Graph
+  Router --> Diff
+  Router --> Metrics
+  Router --> Blast
+  Router --> Security
+  Router --> Jobs
+  Jobs --> Worker
+  Worker --> DB
+  RAG --> Vec
+  Graph --> DB
+  Metrics --> DB
+  Blast --> DB
+  Security --> DB
+  Jobs --> Redis
+  Router --> Redis
+  Jobs --> Repo
+  Graph --> Repo
+  Diff --> Repo
+  Metrics --> Repo
+  Blast --> Repo
+  Security --> Repo
