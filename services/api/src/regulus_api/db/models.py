@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 from enum import Enum
 
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import Column
+from sqlalchemy import JSON, Column
 from sqlmodel import Field, SQLModel
 
 
@@ -95,4 +95,14 @@ class Embedding(SQLModel, table=True):
     model: str
     dim: int
     embedding: list[float] = Field(sa_column=Column(Vector(1536)))
+    created_at: datetime = Field(default_factory=utc_now)
+
+
+class MetricSnapshot(SQLModel, table=True):
+    __tablename__ = "metrics_snapshots"
+
+    id: int | None = Field(default=None, primary_key=True)
+    repo_id: int = Field(foreign_key="repos.id", index=True)
+    kind: str
+    data: dict = Field(sa_column=Column(JSON))
     created_at: datetime = Field(default_factory=utc_now)

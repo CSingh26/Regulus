@@ -8,6 +8,7 @@ from regulus_api.db.models import Chunk, Embedding, File, JobStatus, Repo, utc_n
 from regulus_api.db.session import engine
 from regulus_api.graph.builder import build_dependency_graph
 from regulus_api.indexing.indexer import index_repository
+from regulus_api.metrics.compute import compute_metrics
 from regulus_api.rag.provider import get_embedding_provider
 
 
@@ -137,3 +138,7 @@ def build_embeddings(repo_id: int) -> dict[str, int]:
                 session.add(repo)
                 session.commit()
         raise
+
+
+def compute_repo_metrics(repo_id: int) -> dict:
+    return compute_metrics(repo_id)

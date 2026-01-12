@@ -1,4 +1,13 @@
-from regulus_api.db.models import Chunk, Embedding, File, GraphEdge, GraphNode, JobStatus, Repo
+from regulus_api.db.models import (
+    Chunk,
+    Embedding,
+    File,
+    GraphEdge,
+    GraphNode,
+    JobStatus,
+    MetricSnapshot,
+    Repo,
+)
 from regulus_api.db.session import get_session
 
 __all__ = [
@@ -8,6 +17,7 @@ __all__ = [
     "GraphEdge",
     "GraphNode",
     "JobStatus",
+    "MetricSnapshot",
     "Repo",
     "get_session",
 ]
