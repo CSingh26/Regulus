@@ -3,6 +3,8 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from enum import Enum
 
+from pgvector.sqlalchemy import Vector
+from sqlalchemy import Column
 from sqlmodel import Field, SQLModel
 
 
@@ -81,3 +83,16 @@ class GraphEdge(SQLModel, table=True):
     to_node_id: int = Field(foreign_key="graph_nodes.id", index=True)
     kind: str
     weight: int = 1
+
+
+class Embedding(SQLModel, table=True):
+    __tablename__ = "embeddings"
+
+    id: int | None = Field(default=None, primary_key=True)
+    repo_id: int = Field(foreign_key="repos.id", index=True)
+    chunk_id: int = Field(foreign_key="chunks.id", index=True)
+    provider: str
+    model: str
+    dim: int
+    embedding: list[float] = Field(sa_column=Column(Vector(1536)))
+    created_at: datetime = Field(default_factory=utc_now)
