@@ -10,6 +10,8 @@ from sqlmodel import Session, select
 from regulus_api.core.config import get_settings
 from regulus_api.db.models import JobStatus, Repo
 from regulus_api.db.session import get_session
+from regulus_api.jobs.queue import get_queue
+from regulus_api.jobs.tasks import index_repo
 
 router = APIRouter()
 settings = get_settings()
@@ -48,6 +50,11 @@ class RepoResponse(BaseModel):
     last_error: str | None
 
 
+class JobEnqueueResponse(BaseModel):
+    job_id: str
+    status: str
+
+
 @router.post("/register", response_model=RepoResponse, status_code=status.HTTP_201_CREATED)
 def register_repo(payload: RepoRegisterRequest, session: Session = Depends(get_session)) -> Repo:
     repo_path = Path(payload.path)
@@ -73,3 +80,15 @@ def repo_status(repo_id: int, session: Session = Depends(get_session)) -> Repo:
     if not repo:
         raise HTTPException(status_code=404, detail="repo not found")
     return repo
+
+
+@router.post(
+    "/{repo_id}/index", response_model=JobEnqueueResponse, status_code=status.HTTP_202_ACCEPTED
+)
+def enqueue_index(repo_id: int, session: Session = Depends(get_session)) -> JobEnqueueResponse:
+    repo = session.get(Repo, repo_id)
+    if not repo:
+        raise HTTPException(status_code=404, detail="repo not found")
+    queue = get_queue()
+    job = queue.enqueue(index_repo, repo_id)
+    return JobEnqueueResponse(job_id=job.id, status="queued")

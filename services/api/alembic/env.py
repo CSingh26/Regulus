@@ -4,9 +4,10 @@ import os
 from logging.config import fileConfig
 
 from alembic import context
-from regulus_api.db import models  # noqa: F401
 from sqlalchemy import engine_from_config, pool
 from sqlmodel import SQLModel
+
+from regulus_api.db import models  # noqa: F401
 
 config = context.config
 

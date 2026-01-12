@@ -1,0 +1,74 @@
+from __future__ import annotations
+
+from pathlib import Path
+
+from sqlmodel import Session, delete
+
+from regulus_api.db.models import Chunk, File, JobStatus, Repo, utc_now
+from regulus_api.db.session import engine
+from regulus_api.indexing.indexer import index_repository
+
+
+def index_repo(repo_id: int) -> dict[str, int]:
+    total_chunks = 0
+    try:
+        with Session(engine) as session:
+            repo = session.get(Repo, repo_id)
+            if repo is None:
+                raise ValueError(f"repo {repo_id} not found")
+
+            repo.index_status = JobStatus.running
+            repo.last_error = None
+            repo.updated_at = utc_now()
+            session.add(repo)
+            session.commit()
+
+            session.exec(delete(Chunk).where(Chunk.repo_id == repo_id))  # type: ignore[call-overload,arg-type]
+            session.exec(delete(File).where(File.repo_id == repo_id))  # type: ignore[call-overload,arg-type]
+            session.commit()
+
+            file_records = index_repository(Path(repo.path))
+            for idx, record in enumerate(file_records, start=1):
+                file_row = File(
+                    repo_id=repo_id,
+                    path=record.path,
+                    language=record.language,
+                    size_bytes=record.size_bytes,
+                    loc=record.loc,
+                    sha=record.sha,
+                    updated_at=utc_now(),
+                )
+                session.add(file_row)
+                session.flush()
+                for chunk in record.chunks:
+                    session.add(
+                        Chunk(
+                            repo_id=repo_id,
+                            file_id=file_row.id,
+                            content=chunk.content,
+                            start_line=chunk.start_line,
+                            end_line=chunk.end_line,
+                            token_count=chunk.token_count,
+                        )
+                    )
+                total_chunks += len(record.chunks)
+                if idx % 50 == 0:
+                    session.commit()
+
+            repo.index_status = JobStatus.completed
+            repo.last_indexed_at = utc_now()
+            repo.updated_at = utc_now()
+            session.add(repo)
+            session.commit()
+
+        return {"files": len(file_records), "chunks": total_chunks}
+    except Exception as exc:  # pragma: no cover - best-effort status update
+        with Session(engine) as session:
+            repo = session.get(Repo, repo_id)
+            if repo is not None:
+                repo.index_status = JobStatus.failed
+                repo.last_error = str(exc)[:2000]
+                repo.updated_at = utc_now()
+                session.add(repo)
+                session.commit()
+        raise

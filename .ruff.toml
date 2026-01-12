@@ -9,6 +9,9 @@ ignore = ["B008", "RUF012"]
 [lint.per-file-ignores]
 "**/tests/**/*.py" = ["S101"]
 
+[lint.isort]
+known-first-party = ["regulus_api"]
+
 [format]
 quote-style = "double"
 indent-style = "space"
