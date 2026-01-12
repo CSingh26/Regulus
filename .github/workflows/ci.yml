@@ -69,6 +69,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
       - name: Install dependencies
+        env:
+          NPM_CONFIG_NODE_LINKER: isolated
         run: pnpm -w install --frozen-lockfile
       - name: Detect web workspace
         id: web-dir
