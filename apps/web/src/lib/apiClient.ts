@@ -29,6 +29,29 @@ export type RepoResponse = {
   path: string;
 };
 
+export type GraphNode = {
+  id: number;
+  name: string;
+  path: string;
+  kind: string;
+  loc: number;
+  in_degree: number;
+  out_degree: number;
+};
+
+export type GraphEdge = {
+  id: number;
+  from_node_id: number;
+  to_node_id: number;
+  kind: string;
+  weight: number;
+};
+
+export type GraphResponse = {
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+};
+
 export async function registerRepo(payload: { name: string; path: string }) {
   return request<RepoResponse>('/repos/register', {
     method: 'POST',
@@ -38,4 +61,8 @@ export async function registerRepo(payload: { name: string; path: string }) {
 
 export async function getRepoStatus(repoId: number) {
   return request<RepoResponse>(`/repos/${repoId}/status`);
+}
+
+export async function getGraph(repoId: number) {
+  return request<GraphResponse>(`/graph/${repoId}`);
 }
