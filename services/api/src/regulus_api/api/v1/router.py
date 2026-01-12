@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from regulus_api.api.v1 import blast, diff, graph, metrics, rag, repos
+from regulus_api.api.v1 import blast, diff, graph, metrics, rag, repos, security
 
 api_router = APIRouter()
 api_router.include_router(repos.router, prefix="/repos", tags=["repos"])
@@ -9,3 +9,4 @@ api_router.include_router(rag.router, tags=["rag"])
 api_router.include_router(diff.router, tags=["diff"])
 api_router.include_router(metrics.router, tags=["metrics"])
 api_router.include_router(blast.router, tags=["blast"])
+api_router.include_router(security.router, tags=["security"])

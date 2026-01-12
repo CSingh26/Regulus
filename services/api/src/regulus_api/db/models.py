@@ -106,3 +106,31 @@ class MetricSnapshot(SQLModel, table=True):
     kind: str
     data: dict = Field(sa_column=Column(JSON))
     created_at: datetime = Field(default_factory=utc_now)
+
+
+class Scan(SQLModel, table=True):
+    __tablename__ = "scans"
+
+    id: int | None = Field(default=None, primary_key=True)
+    repo_id: int = Field(foreign_key="repos.id", index=True)
+    tool: str
+    status: JobStatus = Field(default=JobStatus.pending)
+    started_at: datetime = Field(default_factory=utc_now)
+    finished_at: datetime | None = None
+    summary: dict | None = Field(default=None, sa_column=Column(JSON))
+
+
+class Finding(SQLModel, table=True):
+    __tablename__ = "findings"
+
+    id: int | None = Field(default=None, primary_key=True)
+    scan_id: int = Field(foreign_key="scans.id", index=True)
+    repo_id: int = Field(foreign_key="repos.id", index=True)
+    tool: str
+    severity: str
+    file_path: str | None = None
+    line: int | None = None
+    message: str
+    rule_id: str | None = None
+    details: dict | None = Field(default=None, sa_column=Column("metadata", JSON))
+    created_at: datetime = Field(default_factory=utc_now)

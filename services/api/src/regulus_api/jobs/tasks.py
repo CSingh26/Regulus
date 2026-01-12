@@ -4,12 +4,13 @@ from pathlib import Path
 
 from sqlmodel import Session, delete, select
 
-from regulus_api.db.models import Chunk, Embedding, File, JobStatus, Repo, utc_now
+from regulus_api.db.models import Chunk, Embedding, File, Finding, JobStatus, Repo, Scan, utc_now
 from regulus_api.db.session import engine
 from regulus_api.graph.builder import build_dependency_graph
 from regulus_api.indexing.indexer import index_repository
 from regulus_api.metrics.compute import compute_metrics
 from regulus_api.rag.provider import get_embedding_provider
+from regulus_api.security.runner import run_npm_audit, run_pip_audit, run_semgrep
 
 
 def index_repo(repo_id: int) -> dict[str, int]:
@@ -142,3 +143,83 @@ def build_embeddings(repo_id: int) -> dict[str, int]:
 
 def compute_repo_metrics(repo_id: int) -> dict:
     return compute_metrics(repo_id)
+
+
+def run_security_scans(repo_id: int) -> dict[str, int]:
+    repo_path: str | None = None
+    with Session(engine) as session:
+        repo = session.get(Repo, repo_id)
+        if repo is None:
+            raise ValueError(f"repo {repo_id} not found")
+        repo_path = repo.path
+        repo.security_status = JobStatus.running
+        repo.last_error = None
+        repo.updated_at = utc_now()
+        session.add(repo)
+        session.commit()
+
+    if repo_path is None:
+        raise ValueError("repo path missing")
+
+    tool_runners = [run_semgrep, run_pip_audit, run_npm_audit]
+    total_findings = 0
+    failures = 0
+
+    for runner in tool_runners:
+        with Session(engine) as session:
+            scan_record = Scan(
+                repo_id=repo_id,
+                tool=runner.__name__.replace("run_", ""),
+                status=JobStatus.running,
+            )
+            session.add(scan_record)
+            session.commit()
+            session.refresh(scan_record)
+            scan_id = scan_record.id
+
+        try:
+            result = runner(Path(repo_path))
+            with Session(engine) as session:
+                scan_lookup = session.get(Scan, scan_id) if scan_id is not None else None
+                if scan_lookup is not None:
+                    scan_lookup.status = JobStatus.completed
+                    scan_lookup.finished_at = utc_now()
+                    scan_lookup.summary = result.summary
+                    session.add(scan_lookup)
+                for finding in result.findings:
+                    session.add(
+                        Finding(
+                            scan_id=scan_id,
+                            repo_id=repo_id,
+                            tool=finding.tool,
+                            severity=finding.severity,
+                            file_path=finding.file_path,
+                            line=finding.line,
+                            message=finding.message,
+                            rule_id=finding.rule_id,
+                            details=finding.metadata,
+                            created_at=utc_now(),
+                        )
+                    )
+                session.commit()
+            total_findings += len(result.findings)
+        except Exception as exc:  # pragma: no cover - external tool failures
+            failures += 1
+            with Session(engine) as session:
+                scan_lookup = session.get(Scan, scan_id) if scan_id is not None else None
+                if scan_lookup is not None:
+                    scan_lookup.status = JobStatus.failed
+                    scan_lookup.finished_at = utc_now()
+                    scan_lookup.summary = {"error": str(exc)[:2000]}
+                    session.add(scan_lookup)
+                    session.commit()
+
+    with Session(engine) as session:
+        repo = session.get(Repo, repo_id)
+        if repo is not None:
+            repo.security_status = JobStatus.failed if failures else JobStatus.completed
+            repo.updated_at = utc_now()
+            session.add(repo)
+            session.commit()
+
+    return {"findings": total_findings, "failures": failures}

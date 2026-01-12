@@ -21,7 +21,8 @@ dependencies = [
   "pgvector>=0.3.2",
   "openai>=1.51.0",
   "sentence-transformers>=3.0.1",
-  "requests>=2.32.3"
+  "requests>=2.32.3",
+  "pip-audit>=2.7.0"
 ]
 
 [tool.hatch.build.targets.wheel]
