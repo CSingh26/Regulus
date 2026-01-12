@@ -58,3 +58,26 @@ class Chunk(SQLModel, table=True):
     end_line: int
     token_count: int
     created_at: datetime = Field(default_factory=utc_now)
+
+
+class GraphNode(SQLModel, table=True):
+    __tablename__ = "graph_nodes"
+
+    id: int | None = Field(default=None, primary_key=True)
+    repo_id: int = Field(foreign_key="repos.id", index=True)
+    file_id: int = Field(foreign_key="files.id", index=True)
+    name: str
+    path: str
+    kind: str
+    loc: int
+
+
+class GraphEdge(SQLModel, table=True):
+    __tablename__ = "graph_edges"
+
+    id: int | None = Field(default=None, primary_key=True)
+    repo_id: int = Field(foreign_key="repos.id", index=True)
+    from_node_id: int = Field(foreign_key="graph_nodes.id", index=True)
+    to_node_id: int = Field(foreign_key="graph_nodes.id", index=True)
+    kind: str
+    weight: int = 1

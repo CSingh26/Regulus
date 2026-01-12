@@ -6,6 +6,7 @@ from sqlmodel import Session, delete
 
 from regulus_api.db.models import Chunk, File, JobStatus, Repo, utc_now
 from regulus_api.db.session import engine
+from regulus_api.graph.builder import build_dependency_graph
 from regulus_api.indexing.indexer import index_repository
 
 
@@ -72,3 +73,7 @@ def index_repo(repo_id: int) -> dict[str, int]:
                 session.add(repo)
                 session.commit()
         raise
+
+
+def build_graph(repo_id: int) -> dict[str, int]:
+    return build_dependency_graph(repo_id)

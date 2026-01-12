@@ -15,7 +15,9 @@ dependencies = [
   "alembic>=1.13.2",
   "pydantic-settings>=2.3.4",
   "redis>=5.0.8",
-  "rq>=1.16.2"
+  "rq>=1.16.2",
+  "tree-sitter>=0.22.0",
+  "tree-sitter-languages>=1.10.2"
 ]
 
 [tool.hatch.build.targets.wheel]
