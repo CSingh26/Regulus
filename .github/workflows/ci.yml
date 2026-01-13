@@ -63,6 +63,10 @@ jobs:
         env:
           NPM_CONFIG_NODE_LINKER: isolated
         run: pnpm -w install --frozen-lockfile
+      - name: Install web dependencies
+        env:
+          NPM_CONFIG_NODE_LINKER: isolated
+        run: pnpm -C apps/web install --frozen-lockfile
       - name: Debug web deps
         run: |
           node -v
