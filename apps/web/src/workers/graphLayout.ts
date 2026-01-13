@@ -1,15 +1,21 @@
-import { forceCenter, forceCollide, forceLink, forceManyBody, forceSimulation } from 'd3-force';
+/// <reference lib="webworker" />
+import {
+  forceCenter,
+  forceCollide,
+  forceLink,
+  forceManyBody,
+  forceSimulation,
+  type SimulationLinkDatum,
+  type SimulationNodeDatum,
+} from 'd3-force';
 
-type LayoutNode = {
+type LayoutNode = SimulationNodeDatum & {
   id: string;
   x?: number;
   y?: number;
 };
 
-type LayoutEdge = {
-  source: string;
-  target: string;
-};
+type LayoutEdge = SimulationLinkDatum<LayoutNode>;
 
 type LayoutRequest = {
   nodes: LayoutNode[];
@@ -24,12 +30,12 @@ type LayoutResponse = {
 
 const ctx: DedicatedWorkerGlobalScope = self as unknown as DedicatedWorkerGlobalScope;
 
-ctx.onmessage = (event: MessageEvent<LayoutRequest>) => {
+ctx.addEventListener('message', (event: MessageEvent<LayoutRequest>) => {
   const { nodes, edges, width, height } = event.data;
-  const simulation = forceSimulation(nodes)
+  const simulation = forceSimulation<LayoutNode>(nodes)
     .force(
       'link',
-      forceLink(edges)
+      forceLink<LayoutNode, LayoutEdge>(edges)
         .id((node) => node.id)
         .distance(120)
         .strength(0.12),
@@ -43,5 +49,11 @@ ctx.onmessage = (event: MessageEvent<LayoutRequest>) => {
   }
   simulation.stop();
 
-  ctx.postMessage({ nodes } satisfies LayoutResponse);
-};
+  const resolvedNodes: LayoutResponse['nodes'] = nodes.map((node) => ({
+    ...node,
+    x: node.x ?? 0,
+    y: node.y ?? 0,
+  }));
+
+  ctx.postMessage({ nodes: resolvedNodes } satisfies LayoutResponse);
+});
